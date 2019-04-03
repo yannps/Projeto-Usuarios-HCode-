@@ -7,6 +7,7 @@ class UserController{
 
         this.onSubmit();
         this.onEdit();
+        this.selectAll();
 
     }
 
@@ -48,24 +49,14 @@ class UserController{
                         result._photo = content;
                     }
 
-                    tr.dataset.user = JSON.stringify(result);
+                let user = new User();
 
-                    tr.innerHTML =
+                user.loadFromJSON(result);
 
-                 `
-                    
-                <td><img src="${result._photo}" alt="User Image" class="img-circle img-sm"></td>
-                 <td>${result._name}</td>
-                 <td>${result._email}</td>
-                 <td>${(result._admin) ? 'Sim' : 'Não'}</td>
-                <td>${Utils.dateFormat(result._register)}</td>
-                <td>
-                 <button type="button" class="btn btn-primary btn-edit btn-xs btn-flat">Editar</button>
-                 <button type="button" class="btn btn-danger btn-xs btn-flat">Excluir</button>
-                 </td>
-                                  
-                     `;
-                
+                user.save();
+
+                this.getTr(user, tr);
+
                 this.addEventsTr(tr);
 
                 this.updateCount();
@@ -107,6 +98,9 @@ class UserController{
                 (content) => {
 
                 values.photo = content;
+
+                values.save();
+
                 this.addLine(values);
                 
                 this.formEl.reset();
@@ -211,9 +205,38 @@ return new User(
 );
 }
 
+
+selectAll(){
+
+    let users = User.getUsersStorage();
+
+    users.forEach(dataUser =>{
+
+       let user = new User();
+
+       user.loadFromJSON(dataUser);
+
+        this.addLine(user);
+   
+    });
+
+}
+
+
 addLine(dataUser){
 
-    let tr = document.createElement('tr');
+    let tr = this.getTr(dataUser);
+
+   
+
+    this.tableEl.appendChild(tr);
+        
+    this.updateCount();
+}
+
+getTr(dataUser, tr = null){
+
+    if(tr === null) tr = document.createElement('tr');
 
     tr.dataset.user = JSON.stringify(dataUser);
 
@@ -235,21 +258,30 @@ addLine(dataUser){
 
                   this.addEventsTr(tr);
 
-                  
-                this.tableEl.appendChild(tr); 
+                  return tr;
 
-                this.updateCount();
 }
+
 
 addEventsTr(tr){
 
+    //excluir
     tr.querySelector(".btn-delete").addEventListener("click", e=>{
 
         if(confirm("Deseja realmente excluir?")){
 
-            tr.remove();
+            let user = new User();
 
-            this.updateCount();
+                user.loadFromJSON(JSON.parse(tr.dataset.user));
+
+                //metodo remove feito na classe User
+                user.remove();
+
+                //remove nativo(html)
+                tr.remove();
+
+                this.updateCount();
+
         }
 
     });
